@@ -1,5 +1,0 @@
-Adding a new notebook (three steps):
-
-Copy the .ipynb into the notebooks/ folder.
-Add an entry in posts.json for its title/description (details below).
-git add . && git commit -m "new post" && git push — Railway redeploys and it appears.
