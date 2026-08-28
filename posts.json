@@ -2,7 +2,7 @@
   {
     "file": "llm_working.ipynb",
     "title": "How LLMs Actually Work",
-    "date": "2026-02-14",
+    "date": "2026-08-25",
     "description": "Taking a small language model apart and rebuilding text generation by hand, one step at a time.",
     "slug": "how-llms-work",
     "eyebrow": "Notebook",
