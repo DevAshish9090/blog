@@ -331,43 +331,44 @@ def _inject_chrome(html: str, post: dict) -> str:
     return html
 
 
-def _read_posts_json() -> dict:
-    """Return {filename: entry}. Never raises — a bad file just logs and is skipped."""
+def _read_posts_json() -> list:
+    """Return the raw list of entries. Never raises — a bad file just logs and returns []."""
     if not POSTS_JSON.exists():
-        return {}
+        return []
     try:
         data = json.loads(POSTS_JSON.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError) as e:
         print(f"[posts.json] ignored — could not parse: {e}")
-        return {}
+        return []
     if not isinstance(data, list):
         print("[posts.json] ignored — top level must be a list of entries")
-        return {}
-    out = {}
-    for entry in data:
-        if isinstance(entry, dict) and entry.get("file"):
-            out[entry["file"]] = entry
-    return out
+        return []
+    return data
 
 
-def _parse_date(raw, path: Path) -> date:
+def _parse_date(raw, path: Path):
+    """Return a date if raw is a valid YYYY-MM-DD string, else None."""
     if raw:
         try:
             return datetime.fromisoformat(str(raw)).date()
         except ValueError:
-            print(f"[posts.json] bad date {raw!r} for {path.name}; using file time")
-    return date.fromtimestamp(path.stat().st_mtime)
+            print(f"[posts.json] bad date {raw!r} for {path.name}; will stamp today")
+    return None
 
 
 def _load_posts() -> None:
     _POSTS.clear()
-    listed = _read_posts_json()
+    raw = _read_posts_json()
+    by_file = {e["file"]: e for e in raw if isinstance(e, dict) and e.get("file")}
+    today = date.today()
+    stamped = False  # did we assign a fresh date that should be saved?
+
     for path in sorted(NOTEBOOK_DIR.glob("*.ipynb")):
         if path.name.startswith("."):
             continue
         nb = nbformat.read(path, as_version=4)
         nb_meta = nb.metadata.get("blog", {}) if isinstance(nb.metadata, dict) else {}
-        entry = listed.get(path.name, {})
+        entry = by_file.get(path.name, {})
 
         # priority: posts.json  >  notebook metadata  >  derived
         def pick(key, default=None):
@@ -380,7 +381,18 @@ def _load_posts() -> None:
         title = pick("title") or _derive_title(nb, path.stem)
         description = pick("description") or _derive_description(nb)
         eyebrow = pick("eyebrow") or "Notebook"
+
         post_date = _parse_date(pick("date"), path)
+        if post_date is None:
+            # no date anywhere -> stamp today and remember it in posts.json
+            post_date = today
+            if path.name in by_file:
+                by_file[path.name]["date"] = today.isoformat()
+            else:
+                new_entry = {"file": path.name, "date": today.isoformat()}
+                raw.append(new_entry)
+                by_file[path.name] = new_entry
+            stamped = True
 
         body, _ = exporter.from_notebook_node(nb)
         post = {
@@ -389,6 +401,13 @@ def _load_posts() -> None:
         }
         post["html"] = _inject_chrome(body, post)
         _POSTS[slug] = post
+
+    if stamped:
+        try:
+            POSTS_JSON.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
+            print(f"[posts.json] stamped new posts with today's date ({today.isoformat()})")
+        except OSError as e:
+            print(f"[posts.json] could not save stamped dates: {e}")
 
 
 @app.on_event("startup")
