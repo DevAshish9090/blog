@@ -7,7 +7,7 @@ Optional per-notebook metadata (Notebook menu -> Edit Notebook Metadata):
 
     "blog": {
         "title": "How LLMs Actually Work",
-        "date": "2026-08-25",
+        "date": "2026-02-14",
         "description": "Taking a small language model apart, one step at a time.",
         "eyebrow": "Notebook",
         "slug": "how-llms-work",
@@ -15,6 +15,7 @@ Optional per-notebook metadata (Notebook menu -> Edit Notebook Metadata):
     }
 """
 
+import json
 import re
 import warnings
 from datetime import date, datetime
@@ -37,6 +38,7 @@ PROSE = "serif"
 
 BASE_DIR = Path(__file__).parent
 NOTEBOOK_DIR = BASE_DIR / "notebooks"
+POSTS_JSON = BASE_DIR / "posts.json"
 
 exporter = HTMLExporter(template_name="lab", embed_images=True)
 
@@ -191,25 +193,81 @@ def _post_style() -> str:
         color:var(--accent); padding:.1em .35em; border-radius:5px;
       }}
 
-      /* code cells: keep the In/Out gutter, refine the box */
-      body .highlight pre,
-      body .jp-RenderedHTMLCommon pre,
-      body .jp-OutputArea-output pre,
-      body .jp-InputArea-editor{{ font-family:var(--mono) !important; }}
-      body .jp-InputArea-editor{{
-        font-size:14px; background:#fbfbfd; border:1px solid var(--line);
-        border-radius:10px;
+      /* ---------- VS Code Dark+ code cells ---------- */
+      /* colors are driven by these vars; redefining them recolors every token */
+      body .jp-Notebook{{
+        --jp-mirror-editor-keyword-color:#C586C0;
+        --jp-mirror-editor-atom-color:#569CD6;
+        --jp-mirror-editor-string-color:#CE9178;
+        --jp-mirror-editor-number-color:#B5CEA8;
+        --jp-mirror-editor-operator-color:#D4D4D4;
+        --jp-mirror-editor-punctuation-color:#D4D4D4;
+        --jp-mirror-editor-comment-color:#6A9955;
+        --jp-mirror-editor-variable-color:#9CDCFE;
+        --jp-mirror-editor-def-color:#DCDCAA;
+        --jp-mirror-editor-builtin-color:#DCDCAA;
+        --jp-mirror-editor-error-color:#F14C4C;
       }}
-      body .jp-InputPrompt,
-      body .jp-OutputPrompt{{
-        font-family:var(--mono) !important; color:var(--faint);
+      /* input code box */
+      body .jp-Notebook .jp-InputArea-editor{{
+        background:#1e1e1e; border:1px solid #2d2d2d; border-radius:10px;
+        color:#d4d4d4; font-family:var(--mono) !important; font-size:13.5px;
+        padding:10px 14px; overflow-x:auto; -webkit-overflow-scrolling:touch;
       }}
-      body .jp-OutputArea-output{{ font-size:14px; }}
+      body .jp-Notebook .highlight{{ background:transparent; overflow-x:auto; }}
+      body .jp-Notebook .highlight pre{{
+        color:#d4d4d4; background:transparent; white-space:pre;
+      }}
+      /* tokens Pygments leaves uncolored -> VS Code roles */
+      body .jp-Notebook .highlight .n{{ color:#9CDCFE; }}   /* names/vars */
+      body .jp-Notebook .highlight .nb{{ color:#DCDCAA; }}  /* builtins   */
+      body .jp-Notebook .highlight .nn{{ color:#4EC9B0; }}  /* modules    */
+      body .jp-Notebook .highlight .nf,
+      body .jp-Notebook .highlight .fm{{ color:#DCDCAA; }}  /* functions  */
+      body .jp-Notebook .highlight .nc{{ color:#4EC9B0; }}  /* classes    */
+      body .jp-Notebook .highlight .bp{{ color:#569CD6; }}  /* self       */
+      body .jp-Notebook .highlight .si{{ color:#d4d4d4; }}  /* f-string interp */
+      /* VS Code doesn't bold keywords/operators */
+      body .jp-Notebook .highlight .k,
+      body .jp-Notebook .highlight .kn,
+      body .jp-Notebook .highlight .o,
+      body .jp-Notebook .highlight .ow{{ font-weight:normal; }}
 
+      /* text outputs (stdout / repr / tracebacks) as VS Code output panels */
+      body .jp-Notebook .jp-OutputArea-output pre{{
+        background:#1e1e1e; color:#d4d4d4; border-radius:10px;
+        padding:12px 14px; overflow-x:auto; white-space:pre;
+        font-family:var(--mono) !important; font-size:13px;
+        -webkit-overflow-scrolling:touch;
+      }}
+      body .jp-Notebook .jp-OutputArea-output img{{ max-width:100%; height:auto; }}
+      /* wide tables (DataFrames etc.) scroll instead of overflowing on phones */
+      body .jp-Notebook .jp-RenderedHTMLCommon table,
+      body .jp-Notebook .jp-OutputArea-output table{{
+        display:block; overflow-x:auto; max-width:100%;
+        -webkit-overflow-scrolling:touch;
+      }}
+      /* execution-count prompts muted like VS Code */
+      body .jp-Notebook .jp-InputPrompt,
+      body .jp-Notebook .jp-OutputPrompt{{
+        font-family:var(--mono) !important; color:#858585;
+      }}
+
+      /* ---------- mobile ---------- */
       @media(max-width:620px){{
-        .masthead{{ padding:88px 20px 0; }}
-        .jp-Notebook{{ padding:8px 20px 72px !important; }}
-        body .jp-RenderedHTMLCommon{{ font-size:17px; }}
+        .site-bar{{ height:48px; padding:0 16px; font-size:13px; }}
+        .masthead{{ padding:80px 18px 0; }}
+        .masthead .lede{{ font-size:18px; }}
+        .jp-Notebook{{ padding:6px 16px 72px !important; }}
+        body .jp-RenderedHTMLCommon{{ font-size:16.5px; line-height:1.66; }}
+        body .jp-RenderedHTMLCommon h2{{ font-size:22px; }}
+        body .jp-Notebook .jp-InputArea-editor,
+        body .jp-Notebook .jp-OutputArea-output pre{{ font-size:12.5px; }}
+        /* reclaim width: shrink the In/Out gutter on small screens */
+        body .jp-Notebook .jp-InputPrompt,
+        body .jp-Notebook .jp-OutputPrompt{{
+          min-width:0 !important; font-size:11px; padding-right:6px;
+        }}
       }}
     </style>
     """
@@ -245,29 +303,56 @@ def _inject_chrome(html: str, post: dict) -> str:
     return html
 
 
+def _read_posts_json() -> dict:
+    """Return {filename: entry}. Never raises — a bad file just logs and is skipped."""
+    if not POSTS_JSON.exists():
+        return {}
+    try:
+        data = json.loads(POSTS_JSON.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"[posts.json] ignored — could not parse: {e}")
+        return {}
+    if not isinstance(data, list):
+        print("[posts.json] ignored — top level must be a list of entries")
+        return {}
+    out = {}
+    for entry in data:
+        if isinstance(entry, dict) and entry.get("file"):
+            out[entry["file"]] = entry
+    return out
+
+
+def _parse_date(raw, path: Path) -> date:
+    if raw:
+        try:
+            return datetime.fromisoformat(str(raw)).date()
+        except ValueError:
+            print(f"[posts.json] bad date {raw!r} for {path.name}; using file time")
+    return date.fromtimestamp(path.stat().st_mtime)
+
+
 def _load_posts() -> None:
     _POSTS.clear()
+    listed = _read_posts_json()
     for path in sorted(NOTEBOOK_DIR.glob("*.ipynb")):
         if path.name.startswith("."):
             continue
         nb = nbformat.read(path, as_version=4)
-        meta = nb.metadata.get("blog", {}) if isinstance(nb.metadata, dict) else {}
-        if meta.get("draft"):
+        nb_meta = nb.metadata.get("blog", {}) if isinstance(nb.metadata, dict) else {}
+        entry = listed.get(path.name, {})
+
+        # priority: posts.json  >  notebook metadata  >  derived
+        def pick(key, default=None):
+            return entry.get(key, nb_meta.get(key, default))
+
+        if pick("draft", False):
             continue
 
-        slug = _slugify(meta.get("slug") or path.stem)
-        title = meta.get("title") or _derive_title(nb, path.stem)
-        description = meta.get("description") or _derive_description(nb)
-        eyebrow = meta.get("eyebrow") or "Notebook"
-
-        raw_date = meta.get("date")
-        if raw_date:
-            try:
-                post_date = datetime.fromisoformat(str(raw_date)).date()
-            except ValueError:
-                post_date = date.fromtimestamp(path.stat().st_mtime)
-        else:
-            post_date = date.fromtimestamp(path.stat().st_mtime)
+        slug = _slugify(pick("slug") or path.stem)
+        title = pick("title") or _derive_title(nb, path.stem)
+        description = pick("description") or _derive_description(nb)
+        eyebrow = pick("eyebrow") or "Notebook"
+        post_date = _parse_date(pick("date"), path)
 
         body, _ = exporter.from_notebook_node(nb)
         post = {

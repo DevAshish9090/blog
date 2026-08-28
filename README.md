@@ -10,24 +10,33 @@ A tiny FastAPI site that renders `.ipynb` files as faithful Jupyter-style pages
 - The homepage `/` lists them, newest first.
 - Notebooks are rendered once at startup and cached in memory.
 
-Set per-notebook metadata in Jupyter via **Edit -> Edit Notebook Metadata**
-(or the metadata is already there in the sample):
+Post titles, dates, and summaries live in **`posts.json`** — one entry per
+notebook, so you never have to edit anything inside the notebook itself:
 
 ```json
-"blog": {
-  "title": "How LLMs Actually Work",
-  "date": "2026-02-14",
-  "description": "One-line summary shown on the homepage.",
-  "slug": "how-llms-work",
-  "draft": false
-}
+[
+  {
+    "file": "llm_working.ipynb",
+    "title": "How LLMs Actually Work",
+    "date": "2026-02-14",
+    "description": "One-line summary shown on the homepage.",
+    "slug": "how-llms-work",
+    "eyebrow": "Notebook",
+    "draft": false
+  }
+]
 ```
 
-If `blog` is missing, the title falls back to the first heading (then the
-filename), the date to the file's modified time, and the slug to the filename.
-Set `"draft": true` to keep a notebook out of the listing.
+- `file` must match the notebook's filename exactly. Everything else is optional.
+- A notebook that isn't listed still shows up — its title falls back to the
+  first heading (then the filename), date to the file's modified time, slug to
+  the filename.
+- Set `"draft": true` to keep a notebook off the site.
+- If `posts.json` has a typo, the site stays up and just uses those fallbacks;
+  a note is printed in the deploy logs so you can spot it.
 
-Edit `SITE_TITLE` and `SITE_TAGLINE` at the top of `main.py`.
+Edit `SITE_TITLE`, `SITE_TAGLINE`, `PROSE` ("serif"/"sans"), and the
+`--accent` color at the top of `main.py`.
 
 ## Run locally
 
@@ -64,6 +73,9 @@ instead.
 
 ## Adding more posts later
 
-Drop another `.ipynb` into `notebooks/`, commit, push. Railway redeploys and the
-new post appears. (Posts are cached at startup, so a redeploy — or a restart —
-is what picks up changes.)
+1. Drop the new `.ipynb` into `notebooks/`.
+2. Add an entry for it in `posts.json` (optional, but gives it a clean
+   title/date/URL).
+3. Commit and push. Railway redeploys and the new post appears.
+
+Posts are cached at startup, so a redeploy (the push) is what picks up changes.
