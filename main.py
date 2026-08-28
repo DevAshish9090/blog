@@ -193,50 +193,51 @@ def _post_style() -> str:
         color:var(--accent); padding:.1em .35em; border-radius:5px;
       }}
 
-      /* ---------- VS Code Dark+ code cells ---------- */
+      /* ---------- VS Code Light+ colors on light code cells ---------- */
       /* colors are driven by these vars; redefining them recolors every token */
       body .jp-Notebook{{
-        --jp-mirror-editor-keyword-color:#C586C0;
-        --jp-mirror-editor-atom-color:#569CD6;
-        --jp-mirror-editor-string-color:#CE9178;
-        --jp-mirror-editor-number-color:#B5CEA8;
-        --jp-mirror-editor-operator-color:#D4D4D4;
-        --jp-mirror-editor-punctuation-color:#D4D4D4;
-        --jp-mirror-editor-comment-color:#6A9955;
-        --jp-mirror-editor-variable-color:#9CDCFE;
-        --jp-mirror-editor-def-color:#DCDCAA;
-        --jp-mirror-editor-builtin-color:#DCDCAA;
-        --jp-mirror-editor-error-color:#F14C4C;
+        --jp-mirror-editor-keyword-color:#AF00DB;
+        --jp-mirror-editor-atom-color:#0000FF;
+        --jp-mirror-editor-string-color:#A31515;
+        --jp-mirror-editor-number-color:#098658;
+        --jp-mirror-editor-operator-color:#000000;
+        --jp-mirror-editor-punctuation-color:#000000;
+        --jp-mirror-editor-comment-color:#008000;
+        --jp-mirror-editor-variable-color:#001080;
+        --jp-mirror-editor-def-color:#795E26;
+        --jp-mirror-editor-builtin-color:#795E26;
+        --jp-mirror-editor-error-color:#CD3131;
       }}
-      /* input code box */
+      /* input code box: light, not black */
       body .jp-Notebook .jp-InputArea-editor{{
-        background:#1e1e1e; border:1px solid #2d2d2d; border-radius:10px;
-        color:#d4d4d4; font-family:var(--mono) !important; font-size:13.5px;
+        background:#ffffff; border:1px solid #e6e6ec; border-radius:10px;
+        color:#1f1f1f; font-family:var(--mono) !important; font-size:13.5px;
         padding:10px 14px; overflow-x:auto; -webkit-overflow-scrolling:touch;
       }}
       body .jp-Notebook .highlight{{ background:transparent; overflow-x:auto; }}
       body .jp-Notebook .highlight pre{{
-        color:#d4d4d4; background:transparent; white-space:pre;
+        color:#1f1f1f; background:transparent; white-space:pre;
       }}
-      /* tokens Pygments leaves uncolored -> VS Code roles */
-      body .jp-Notebook .highlight .n{{ color:#9CDCFE; }}   /* names/vars */
-      body .jp-Notebook .highlight .nb{{ color:#DCDCAA; }}  /* builtins   */
-      body .jp-Notebook .highlight .nn{{ color:#4EC9B0; }}  /* modules    */
+      /* tokens Pygments leaves uncolored -> VS Code Light+ roles */
+      body .jp-Notebook .highlight .n{{ color:#001080; }}   /* names/vars */
+      body .jp-Notebook .highlight .nb{{ color:#795E26; }}  /* builtins   */
+      body .jp-Notebook .highlight .nn{{ color:#267F99; }}  /* modules    */
       body .jp-Notebook .highlight .nf,
-      body .jp-Notebook .highlight .fm{{ color:#DCDCAA; }}  /* functions  */
-      body .jp-Notebook .highlight .nc{{ color:#4EC9B0; }}  /* classes    */
-      body .jp-Notebook .highlight .bp{{ color:#569CD6; }}  /* self       */
-      body .jp-Notebook .highlight .si{{ color:#d4d4d4; }}  /* f-string interp */
+      body .jp-Notebook .highlight .fm{{ color:#795E26; }}  /* functions  */
+      body .jp-Notebook .highlight .nc{{ color:#267F99; }}  /* classes    */
+      body .jp-Notebook .highlight .bp{{ color:#0000FF; }}  /* self       */
+      body .jp-Notebook .highlight .kc{{ color:#0000FF; }}  /* True/False/None */
+      body .jp-Notebook .highlight .si{{ color:#1f1f1f; }}  /* f-string interp */
       /* VS Code doesn't bold keywords/operators */
       body .jp-Notebook .highlight .k,
       body .jp-Notebook .highlight .kn,
       body .jp-Notebook .highlight .o,
       body .jp-Notebook .highlight .ow{{ font-weight:normal; }}
 
-      /* text outputs (stdout / repr / tracebacks) as VS Code output panels */
+      /* text outputs (stdout / repr / tracebacks): light panel */
       body .jp-Notebook .jp-OutputArea-output pre{{
-        background:#1e1e1e; color:#d4d4d4; border-radius:10px;
-        padding:12px 14px; overflow-x:auto; white-space:pre;
+        background:#f6f6f9; color:#1f1f1f; border:1px solid #ececf1;
+        border-radius:10px; padding:12px 14px; overflow-x:auto; white-space:pre;
         font-family:var(--mono) !important; font-size:13px;
         -webkit-overflow-scrolling:touch;
       }}
@@ -250,7 +251,7 @@ def _post_style() -> str:
       /* execution-count prompts muted like VS Code */
       body .jp-Notebook .jp-InputPrompt,
       body .jp-Notebook .jp-OutputPrompt{{
-        font-family:var(--mono) !important; color:#858585;
+        font-family:var(--mono) !important; color:#7a7a85;
       }}
 
       /* ---------- mobile ---------- */
