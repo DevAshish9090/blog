@@ -30,7 +30,7 @@ from nbconvert import HTMLExporter
 warnings.filterwarnings("ignore", message="IPython3 lexer unavailable")
 
 # ---- Configure your site here -------------------------------------------------
-SITE_TITLE = "zvd's notebook"
+SITE_TITLE = "Ashish's notebook"
 SITE_TAGLINE = "Taking machine learning apart, one notebook at a time."
 # Prose font: "serif" reads like a publication; flip to "sans" if you prefer.
 PROSE = "serif"
