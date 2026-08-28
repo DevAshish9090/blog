@@ -34,6 +34,8 @@ SITE_TITLE = "zvd's notebook"
 SITE_TAGLINE = "Taking machine learning apart, one notebook at a time."
 # Prose font: "serif" reads like a publication; flip to "sans" if you prefer.
 PROSE = "serif"
+GITHUB_URL = "https://github.com/DevAshish9090"
+LINKEDIN_URL = "https://www.linkedin.com/in/devashish9090/"
 # ------------------------------------------------------------------------------
 
 BASE_DIR = Path(__file__).parent
@@ -254,6 +256,18 @@ def _post_style() -> str:
         font-family:var(--mono) !important; color:#7a7a85;
       }}
 
+      /* post footer */
+      .site-foot{{
+        max-width:840px; margin:56px auto 0; padding:26px 28px 88px;
+        border-top:1px solid var(--line);
+        display:flex; justify-content:space-between; align-items:center;
+        gap:16px; flex-wrap:wrap;
+      }}
+      .site-foot a{{ font:600 14px/1 var(--display); color:var(--accent);
+        text-decoration:none; }}
+      .site-foot a:hover{{ text-decoration:underline; }}
+      .site-foot .foot-links{{ display:flex; gap:22px; }}
+
       /* ---------- mobile ---------- */
       @media(max-width:620px){{
         .site-bar{{ height:48px; padding:0 16px; font-size:13px; }}
@@ -290,6 +304,18 @@ def _masthead(post: dict) -> str:
     """
 
 
+def _footer_html() -> str:
+    return f"""
+    <footer class="site-foot">
+      <a href="/">← All notebooks</a>
+      <div class="foot-links">
+        <a href="{GITHUB_URL}" target="_blank" rel="noopener">GitHub</a>
+        <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </footer>
+    """
+
+
 def _inject_chrome(html: str, post: dict) -> str:
     head = FONTS + _post_style()
     html = html.replace("</head>", head + "</head>", 1)
@@ -301,6 +327,7 @@ def _inject_chrome(html: str, post: dict) -> str:
         "</div>"
     )
     html = re.sub(r"(<body[^>]*>)", r"\1" + bar + _masthead(post), html, count=1)
+    html = html.replace("</body>", _footer_html() + "</body>", 1)
     return html
 
 
@@ -420,7 +447,12 @@ def _index_page() -> str:
     .card-go{{ display:inline-block; margin-top:18px; font:600 14px/1 var(--display);
       color:var(--accent); }}
     .empty{{ color:var(--faint); }}
-    footer{{ margin-top:64px; font:400 14px/1.5 var(--ui); color:var(--faint); }}
+    footer{{ margin-top:64px; border-top:1px solid var(--line); padding-top:24px; }}
+    footer .foot-links{{ display:flex; gap:22px; margin-bottom:10px; }}
+    footer .foot-links a{{ font:600 14px/1 var(--display); color:var(--accent);
+      text-decoration:none; }}
+    footer .foot-links a:hover{{ text-decoration:underline; }}
+    footer .foot-note{{ font:400 13px/1.5 var(--ui); color:var(--faint); }}
     @media(max-width:620px){{ .wrap{{ padding:64px 20px 96px; }}
       .card{{ padding:24px; }} }}
   </style>
@@ -433,7 +465,13 @@ def _index_page() -> str:
       <p class="tag">{SITE_TAGLINE}</p>
     </header>
     {cards}
-    <footer>Built with FastAPI + nbconvert.</footer>
+    <footer>
+      <div class="foot-links">
+        <a href="{GITHUB_URL}" target="_blank" rel="noopener">GitHub</a>
+        <a href="{LINKEDIN_URL}" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+      <div class="foot-note">Built with FastAPI + nbconvert.</div>
+    </footer>
   </div>
 </body>
 </html>"""
