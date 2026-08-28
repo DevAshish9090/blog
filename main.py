@@ -7,7 +7,7 @@ Optional per-notebook metadata (Notebook menu -> Edit Notebook Metadata):
 
     "blog": {
         "title": "How LLMs Actually Work",
-        "date": "2026-02-14",
+        "date": "2026-08-25",
         "description": "Taking a small language model apart, one step at a time.",
         "eyebrow": "Notebook",
         "slug": "how-llms-work",
